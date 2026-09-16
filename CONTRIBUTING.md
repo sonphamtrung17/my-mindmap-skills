@@ -31,16 +31,16 @@ The render helper has a bash test suite (no network — it uses a fake `npx`):
 bash tests/run_tests.sh
 ```
 
-Expected: `ALL TESTS PASSED` (45 checks across `test_render.sh`, `test_skill_frontmatter.sh`, `test_skill_body.sh`, `test_skill_zh.sh`).
+Expected: `ALL TESTS PASSED` (47 checks across `test_render.sh`, `test_skill_frontmatter.sh`, `test_skill_body.sh`, `test_skill_vi.sh`).
 
 ```
-mindmap/
+my-mindmap-skills/
 ├── .claude-plugin/
 │   ├── plugin.json        # plugin manifest
 │   └── marketplace.json   # marketplace manifest (for /plugin marketplace add)
 ├── skills/
 │   ├── mindmap/           # English skill (/mindmap)
-│   └── mindmap-zh/        # Chinese skill (/mindmap-zh)
+│   └── mindmap-vi/        # Vietnamese skill (/mindmap-vi)
 ├── tests/                 # bash harness for render.sh + SKILL.md structure
 ├── examples/              # real generated output (.md + rendered .html)
 ├── docs/                  # design spec

@@ -9,13 +9,13 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-22c55e.svg)](LICENSE)
 [![Works with](https://img.shields.io/badge/works%20with-Claude%20Code%20%7C%20GitHub%20Copilot-2563eb)](#-install)
 [![Output](https://img.shields.io/badge/output-Markmap%20.md%20%2B%20.html-f97316)](https://markmap.js.org)
-[![Skills](https://img.shields.io/badge/skills-%2Fmindmap%20%7C%20%2Fmindmap--zh-8b5cf6)](#-install)
+[![Skills](https://img.shields.io/badge/skills-%2Fmindmap%20%7C%20%2Fmindmap--vi-8b5cf6)](#-install)
 
 </div>
 
 `mindmap` is a plugin for [Claude Code](https://docs.claude.com/en/docs/claude-code) and [GitHub Copilot](https://docs.github.com/copilot/concepts/agents/copilot-cli). Point it at a dense report, a long article, or just a topic, and it distills the key ideas into a clean, zoomable [Markmap](https://markmap.js.org) mindmap — right from your terminal.
 
-> Two languages in one plugin: `/mindmap` (English) and `/mindmap-zh` (中文).
+> Two languages in one plugin: `/mindmap` (English) and `/mindmap-vi` (Tiếng Việt).
 
 ### From any source to a map — in one command
 
@@ -102,7 +102,7 @@ copilot plugin marketplace add sonphamtrung17/my-mindmap-skills
 copilot plugin install mindmap@mindmap-marketplace
 ```
 
-Then run `/mindmap` in your session. On GitHub Copilot the skill uses the same workflow; tool names map automatically (see [`skills/mindmap/references/copilot-tools.md`](skills/mindmap/references/copilot-tools.md)).
+Then run `/mindmap` (English) or `/mindmap-vi` (Vietnamese) in your session. On GitHub Copilot the skill uses the same workflow; tool names map automatically (see [`skills/mindmap/references/copilot-tools.md`](skills/mindmap/references/copilot-tools.md)).
 
 The marketplace manifest lives at [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json).
 
@@ -113,14 +113,14 @@ Copy the skill into your project's (or user-level) skills directory:
 ```bash
 # project-local
 mkdir -p .claude/skills
-cp -r skills/mindmap .claude/skills/
+cp -r skills/mindmap skills/mindmap-vi .claude/skills/
 
 # or user-level (available in every project)
 mkdir -p ~/.claude/skills
-cp -r skills/mindmap ~/.claude/skills/
+cp -r skills/mindmap skills/mindmap-vi ~/.claude/skills/
 ```
 
-Then run `/reload-skills` (or restart Claude Code). Confirm with `/help` that `/mindmap` is listed.
+Then run `/reload-skills` (or restart Claude Code). Confirm with `/help` that `/mindmap` and `/mindmap-vi` are listed.
 
 ---
 

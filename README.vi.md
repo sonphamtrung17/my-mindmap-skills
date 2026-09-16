@@ -6,7 +6,7 @@
 
 `mindmap` là một plugin cho [Claude Code](https://docs.claude.com/en/docs/claude-code) và [GitHub Copilot](https://docs.github.com/copilot/concepts/agents/copilot-cli). Trỏ nó vào một báo cáo dày đặc, một bài viết dài, hoặc chỉ một chủ đề — nó sẽ chắt lọc các ý chính thành một sơ đồ tư duy [Markmap](https://markmap.js.org) gọn gàng, zoom được, ngay trong terminal của bạn.
 
-> Một plugin, hai skill: `/mindmap` (tiếng Anh) và `/mindmap-zh` (tiếng Trung).
+> Một plugin, hai skill: `/mindmap` (tiếng Anh) và `/mindmap-vi` (tiếng Việt).
 
 ---
 
@@ -74,7 +74,7 @@ copilot plugin marketplace add sonphamtrung17/my-mindmap-skills
 copilot plugin install mindmap@mindmap-marketplace
 ```
 
-Sau đó chạy `/mindmap` (tiếng Anh) hoặc `/mindmap-zh` (tiếng Trung) trong session. Trên GitHub Copilot, workflow giữ nguyên; tên tool được map tự động (xem [`skills/mindmap/references/copilot-tools.md`](skills/mindmap/references/copilot-tools.md)).
+Sau đó chạy `/mindmap` (tiếng Anh) hoặc `/mindmap-vi` (tiếng Việt) trong session. Trên GitHub Copilot, workflow giữ nguyên; tên tool được map tự động (xem [`skills/mindmap-vi/references/copilot-tools.md`](skills/mindmap-vi/references/copilot-tools.md)).
 
 Manifest của marketplace nằm ở [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json).
 
@@ -85,14 +85,14 @@ Copy skill vào thư mục skills của project (hoặc của user):
 ```bash
 # Cấp project
 mkdir -p .claude/skills
-cp -r skills/mindmap skills/mindmap-zh .claude/skills/
+cp -r skills/mindmap skills/mindmap-vi .claude/skills/
 
 # Hoặc cấp user (dùng được ở mọi project)
 mkdir -p ~/.claude/skills
-cp -r skills/mindmap skills/mindmap-zh ~/.claude/skills/
+cp -r skills/mindmap skills/mindmap-vi ~/.claude/skills/
 ```
 
-Sau đó chạy `/reload-skills` (hoặc restart Claude Code). Dùng `/help` để xác nhận `/mindmap` và `/mindmap-zh` đã xuất hiện trong danh sách.
+Sau đó chạy `/reload-skills` (hoặc restart Claude Code). Dùng `/help` để xác nhận `/mindmap` và `/mindmap-vi` đã xuất hiện trong danh sách.
 
 ---
 
@@ -193,7 +193,7 @@ Script render có bộ test bằng bash (không cần mạng — dùng `npx` gi�
 bash tests/run_tests.sh
 ```
 
-Kết quả mong đợi: `ALL TESTS PASSED` (45 check, trải trên `test_render.sh`, `test_skill_frontmatter.sh`, `test_skill_body.sh`, `test_skill_zh.sh`).
+Kết quả mong đợi: `ALL TESTS PASSED` (47 check, trải trên `test_render.sh`, `test_skill_frontmatter.sh`, `test_skill_body.sh`, `test_skill_vi.sh`).
 
 ```
 my-mindmap-skills/
@@ -202,7 +202,7 @@ my-mindmap-skills/
 │   └── marketplace.json   # Manifest marketplace (dùng cho /plugin marketplace add)
 ├── skills/
 │   ├── mindmap/           # Skill tiếng Anh (/mindmap)
-│   └── mindmap-zh/        # Skill tiếng Trung (/mindmap-zh)
+│   └── mindmap-vi/        # Skill tiếng Việt (/mindmap-vi)
 ├── tests/                 # Test bash cho render.sh + cấu trúc SKILL.md
 ├── examples/              # Output thật đã sinh (.md + .html đã render)
 ├── docs/                  # Tài liệu thiết kế
