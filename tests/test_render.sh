@@ -116,4 +116,15 @@ assert_eq 1 "$copies" "injection is idempotent"
 node --check "$here/../skills/mindmap/scripts/balanced-layout.js" 2>/dev/null; rc=$?
 assert_eq 0 "$rc" "balanced-layout.js parses"
 
+# Case 11: skills are installed as a symlink (~/.agents/skills/<name> -> this
+# repo), so render.sh reaches balance-html.mjs through a symlinked path. Node
+# resolves import.meta.url to the realpath, so a naive main-guard comparison
+# silently skips patching and the HTML stays one-sided.
+linkroot="$(mktemp -d)"; _tmpdirs+=("$linkroot")
+ln -s "$here/../skills/mindmap" "$linkroot/mindmap"
+PATH="$mmbin:$PATH" bash "$linkroot/mindmap/scripts/render.sh" \
+  "$work/doc.mindmap.md" "$work/symlinked.html" >/dev/null 2>&1
+assert_contains "$(cat "$work/symlinked.html")" "balanced-layout.js" \
+  "patches html when invoked through a symlinked skill dir"
+
 finish

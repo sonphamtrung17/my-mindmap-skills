@@ -9,7 +9,7 @@
 // Usage: node balance-html.mjs <html-path>
 // Exit: 0 ok (patched, or already patched) | 1 usage | 2 file not found
 //       | 6 markmap-view script tag not found (nothing was modified)
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, realpathSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -26,7 +26,13 @@ function balanceHtml(html, patch) {
 
 export { balanceHtml };
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+// Skills are normally installed as a symlink (~/.agents/skills/<name> ->
+// this repo) and render.sh invokes this script by that symlinked path. Node
+// resolves import.meta.url to the realpath, so a plain === never matches and
+// the CLI becomes a silent no-op that leaves the HTML one-sided. Compare
+// realpaths instead.
+const realOrSelf = (p) => { try { return realpathSync(p); } catch { return p; } };
+if (process.argv[1] && realOrSelf(fileURLToPath(import.meta.url)) === realOrSelf(process.argv[1])) {
   const htmlPath = process.argv[2];
   if (!htmlPath) {
     process.stderr.write('usage: balance-html.mjs <html-path>\n');
