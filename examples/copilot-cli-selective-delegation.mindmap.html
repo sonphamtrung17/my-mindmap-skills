@@ -218,7 +218,11 @@ html {
       .attr('d', function (l) {
         var s = l.source.state;
         var t = l.target.state;
-        var sx = s.mirrored ? s.rect.x : s.rect.x + s.rect.width;
+        // The side is the TARGET's: a mirrored child hangs off its parent's
+        // left edge, whatever side the parent itself is on. Keying the exit
+        // edge off the source instead makes every left-hand link leave the
+        // root's right edge and sweep back across the root's own label.
+        var sx = t.mirrored ? s.rect.x : s.rect.x + s.rect.width;
         var tx = t.mirrored ? t.rect.x + t.rect.width : t.rect.x;
         return linkShape({
           source: [sx, s.rect.y + s.rect.height + lineWidth(l.source) / 2],
