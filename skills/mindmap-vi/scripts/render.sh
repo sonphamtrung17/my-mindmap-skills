@@ -34,4 +34,16 @@ if ! npx --yes markmap-cli "$md" -o "$html" --no-open >&2; then
   exit 4
 fi
 
+# markmap-cli emits a right-only tree, which wastes the whole left half of the
+# viewport and shrinks the text. Inline the bilateral-layout patch. Best-effort:
+# a one-sided .html is still a valid deliverable, so never fail the render here.
+balance="$(cd "$(dirname "$0")" && pwd)/balance-html.mjs"
+if [ -f "$balance" ] && command -v node >/dev/null 2>&1; then
+  if ! node "$balance" "$html" >/dev/null; then
+    echo "warning: balanced layout not applied; HTML keeps markmap's one-sided layout." >&2
+  fi
+else
+  echo "warning: balanced layout skipped (needs Node.js and balance-html.mjs)." >&2
+fi
+
 echo "$html"

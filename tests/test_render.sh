@@ -67,4 +67,53 @@ chmod +x "$failbin/npx"
 PATH="$failbin:$PATH" bash "$RENDER" "$work/doc.mindmap.md" >/dev/null 2>&1; rc=$?
 assert_eq 4 "$rc" "render failure exits 4"
 
+# Case 7: HTML without a markmap-view script tag (the fake npx above emits bare
+# <html></html>) cannot be patched -> warn on stderr, but still succeed.
+warn="$(PATH="$fakebin:$PATH" bash "$RENDER" "$work/doc.mindmap.md" "$work/nopatch.html" 2>&1 >/dev/null)"; rc=$?
+assert_eq 0 "$rc" "unpatchable html still exits 0"
+assert_contains "$warn" "balanced layout not applied" "warns when layout patch cannot be applied"
+
+# Build a fake npx that emits markmap-cli-shaped HTML, so the bilateral-layout
+# patch has its anchor (the markmap-view script tag) to attach to.
+mmbin="$(mktemp -d)"; _tmpdirs+=("$mmbin")
+cat > "$mmbin/npx" <<'FAKE'
+#!/usr/bin/env bash
+out=""; prev=""
+for a in "$@"; do
+  [ "$prev" = "-o" ] && out="$a"
+  prev="$a"
+done
+cat > "$out" <<'HTML'
+<html><body><svg id="mindmap"></svg>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/markmap-view@0.18.12/dist/browser/index.js"></script>
+<script>window.mm = markmap.Markmap.create("svg#mindmap", null, {});</script>
+</body></html>
+HTML
+exit 0
+FAKE
+chmod +x "$mmbin/npx"
+
+# Case 8: the patch is inlined, and inlined BEFORE the Markmap.create() call —
+# patching the prototype after create() would leave the map one-sided.
+PATH="$mmbin:$PATH" bash "$RENDER" "$work/doc.mindmap.md" "$work/patched.html" >/dev/null 2>&1
+patched="$(cat "$work/patched.html")"
+assert_contains "$patched" "balanced-layout.js" "inlines the balanced-layout patch"
+assert_contains "$patched" "markmap-mirrored" "inlines the patch body, not just a marker"
+marker_at="$(awk '/balanced-layout.js/ {print NR; exit}' "$work/patched.html")"
+create_at="$(awk '/Markmap.create/ {print NR; exit}' "$work/patched.html")"
+[ -n "$marker_at" ] && [ -n "$create_at" ] && [ "$marker_at" -lt "$create_at" ] && before=yes || before=no
+assert_eq "yes" "$before" "patch is inlined before Markmap.create"
+
+# Case 9: re-rendering over an already patched file must not stack copies.
+PATH="$mmbin:$PATH" bash "$RENDER" "$work/doc.mindmap.md" "$work/patched.html" >/dev/null 2>&1
+node "$here/../skills/mindmap/scripts/balance-html.mjs" "$work/patched.html"
+copies="$(grep -c '/\* balanced-layout.js \*/' "$work/patched.html")"
+assert_eq 1 "$copies" "injection is idempotent"
+
+# Case 10: the browser patch must be syntactically valid; it is inlined verbatim
+# into every rendered .html, so a parse error would break the whole page.
+node --check "$here/../skills/mindmap/scripts/balanced-layout.js" 2>/dev/null; rc=$?
+assert_eq 0 "$rc" "balanced-layout.js parses"
+
 finish

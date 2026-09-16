@@ -240,10 +240,12 @@ markmap:
 /mindmap "transformer attention" --render
 ```
 
-This runs `npx markmap-cli <file>.md -o <file>.html --no-open` under the hood (via [`skills/mindmap/scripts/render.sh`](skills/mindmap/scripts/render.sh)).
+This runs `npx markmap-cli <file>.md -o <file>.html --no-open` under the hood (via [`skills/mindmap/scripts/render.sh`](skills/mindmap/scripts/render.sh)), then inlines a **bilateral-layout patch** into the HTML.
 
+- **Balanced left/right layout.** Stock markmap grows the tree to the right only: the root sits on the left edge, tall maps end up height-constrained, and half the viewport stays empty at an unreadable scale. [`balanced-layout.js`](skills/mindmap/scripts/balanced-layout.js) splits the root's branches into a right and a left group and mirrors the left one, so the map fills the viewport symmetrically. On a 75-node map: aspect ratio `0.60 → 2.10`, zoom `0.41 → 0.68`, margins `492/491` → `35/35`.
 - **The `.md` is always the guaranteed deliverable.** Rendering is best-effort.
 - If `npx` / Node.js isn't installed, the skill still writes the `.md`, reports that rendering was skipped, and prints the exact command to run manually — nothing is lost.
+- If the layout patch can't be applied, the `.html` is still written with markmap's stock one-sided layout and a warning goes to stderr.
 
 **Requirement:** [Node.js](https://nodejs.org) (provides `npx`). No global install needed — `npx` fetches `markmap-cli` on demand.
 

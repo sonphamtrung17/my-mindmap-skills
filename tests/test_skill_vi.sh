@@ -33,11 +33,15 @@ assert_contains "$body" "URL" "documents URL as an input type"
 # The skill must instruct Vietnamese output, otherwise it is just /mindmap.
 assert_contains "$body" "bằng tiếng Việt" "mandates Vietnamese output"
 
-# The vi render.sh must stay byte-identical to the en one (no drift).
-EN="$here/../skills/mindmap/scripts/render.sh"
+# The vi render pipeline must stay byte-identical to the en one (no drift): both
+# skills share the renderer, so a fix applied to one must land in both.
+for script in render.sh balanced-layout.js balance-html.mjs; do
+  EN="$here/../skills/mindmap/scripts/$script"
+  VI="$here/../skills/mindmap-vi/scripts/$script"
+  if cmp -s "$EN" "$VI"; then identical=yes; else identical=no; fi
+  assert_eq "yes" "$identical" "vi $script is byte-identical to en $script"
+done
 VI="$here/../skills/mindmap-vi/scripts/render.sh"
-if cmp -s "$EN" "$VI"; then identical=yes; else identical=no; fi
-assert_eq "yes" "$identical" "vi render.sh is byte-identical to en render.sh"
 
 # render.sh must stay executable so `bash <path>` and direct exec both work.
 [ -x "$VI" ] && execbit=yes || execbit=no

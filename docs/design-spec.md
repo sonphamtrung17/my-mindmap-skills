@@ -43,11 +43,17 @@ convention.
 ### File layout
 
 ```
-mindmap-skill/
+my-mindmap-skills/
 └── skills/
-    └── mindmap/
-        ├── SKILL.md        # instructions + format spec + worked example
-        └── render.sh       # optional: npx markmap-cli wrapper for --render
+    ├── mindmap/                       # /mindmap (English)
+    │   ├── SKILL.md                   # instructions + format spec + worked example
+    │   ├── references/                # Copilot tool mapping, judge panel
+    │   └── scripts/
+    │       ├── render.sh              # optional: npx markmap-cli wrapper for --render
+    │       ├── balanced-layout.js     # browser patch: bilateral markmap layout
+    │       ├── balance-html.mjs       # inlines the patch into the rendered .html
+    │       └── degrade-rich.mjs       # rich nodes -> bullets, for the poster path
+    └── mindmap-vi/                    # /mindmap-vi (Vietnamese); shares the renderer
 ```
 
 ### SKILL.md frontmatter
@@ -180,8 +186,35 @@ is best-effort and degrades gracefully.
 - **Input:** `$1` = path to the `.md`; optional `$2` = output `.html` path
   (default: swap extension).
 - **Does:** verify `npx` exists → `npx markmap-cli "$md" -o "$html" --no-open` →
-  print the html path.
-- **Depends on:** `npx` only. No other state.
+  inline the bilateral-layout patch → print the html path.
+- **Depends on:** `npx` only; the layout step additionally wants `node`. No
+  other state.
+
+### Bilateral layout
+
+markmap grows the tree rightwards only, so a many-branch map is tall and
+narrow: `fit()` becomes height-constrained and half the viewport is wasted at
+an unreadable scale. After a successful render, `balance-html.mjs` inlines
+`balanced-layout.js` immediately after the markmap-view bundle — before the
+page's `Markmap.create()` call.
+
+- **Patch point:** `Markmap.prototype._relayout` (geometry) and
+  `Markmap.prototype.renderData` (direction-dependent drawing). Not a subclass:
+  the static `create()` instantiates an internal binding, so replacing
+  `window.markmap.Markmap` would never reach the real instance.
+- **Geometry:** everything markmap draws — node transforms, link paths,
+  `fit()` — derives from `node.state.rect`, so rewriting rects is sufficient.
+  The root's branches are split into two contiguous groups (cut where the two
+  halves are closest in height), each group is stacked vertically on its own,
+  and the left group is mirrored across the root's horizontal centre.
+- **Redraw:** link endpoints flip (parent's left edge → child's right edge) and
+  the fold circle moves to `cx = 0` for mirrored nodes.
+- **Deliberately no `text-align: right`** on mirrored nodes: markmap sizes each
+  node from its content `scrollWidth`, and right-aligned overflow grows
+  leftwards where `scrollWidth` cannot see it, so the node would be measured
+  too narrow on the next `_relayout()` and clip its own text.
+- **Best-effort:** a missing anchor or missing `node` only warns on stderr; the
+  one-sided `.html` is still a valid deliverable.
 
 ## Testing Plan
 

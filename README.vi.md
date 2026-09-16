@@ -156,10 +156,12 @@ markmap:
 /mindmap "Transformer attention" --render
 ```
 
-Bên dưới nó chạy `npx markmap-cli <file>.md -o <file>.html --no-open` (thông qua [`skills/mindmap/scripts/render.sh`](skills/mindmap/scripts/render.sh)).
+Bên dưới nó chạy `npx markmap-cli <file>.md -o <file>.html --no-open` (thông qua [`skills/mindmap-vi/scripts/render.sh`](skills/mindmap-vi/scripts/render.sh)), rồi nhúng thêm một **patch layout hai chiều** vào file HTML.
 
+- **Layout cân đối trái/phải.** markmap gốc chỉ mọc cây sang phải: node gốc nằm sát lề trái, map càng nhiều nhánh thì càng cao, fit bị giới hạn bởi chiều cao, và nửa viewport bị bỏ trống trong khi chữ co lại tới mức khó đọc. [`balanced-layout.js`](skills/mindmap-vi/scripts/balanced-layout.js) chia các nhánh cấp 1 thành nhóm phải và nhóm trái rồi lật nhóm trái, nên map lấp đầy viewport một cách đối xứng. Đo trên map 75 node: tỉ lệ khung `0.60 → 2.10`, zoom `0.41 → 0.68`, lề `492/491` → `35/35`.
 - **File `.md` luôn là kết quả được đảm bảo.** Việc render chỉ là best-effort.
 - Nếu chưa cài `npx` / Node.js, skill vẫn ghi ra `.md`, báo là đã bỏ qua bước render, và in ra chính xác câu lệnh để bạn chạy tay — không mất gì cả.
+- Nếu không nhúng được patch layout, file `.html` vẫn được ghi với layout một chiều mặc định của markmap và in cảnh báo ra stderr.
 
 **Yêu cầu:** [Node.js](https://nodejs.org) (để có `npx`). Không cần cài global — `npx` sẽ tự tải `markmap-cli` khi cần.
 
@@ -170,16 +172,18 @@ Bên dưới nó chạy `npx markmap-cli <file>.md -o <file>.html --no-open` (th
 Đây là một skill **điều khiển bằng prompt**: phần thông minh nằm trong chỉ dẫn, không nằm trong code.
 
 ```
-skills/mindmap/
+skills/mindmap-vi/
 ├── SKILL.md            # Workflow mà Claude tuân theo: phân loại đầu vào → dựng cây phân cấp → ghi .md → (tuỳ chọn) render
 ├── scripts/
-│   └── render.sh       # Đoạn code duy nhất — wrapper mỏng quanh `npx markmap-cli`
+│   ├── render.sh          # Wrapper mỏng quanh `npx markmap-cli`
+│   ├── balanced-layout.js # Patch chạy trong browser: layout markmap hai chiều
+│   └── balance-html.mjs   # Nhúng balanced-layout.js vào file .html đã render
 └── references/
     └── copilot-tools.md  # Bảng map tên tool Claude Code → GitHub Copilot
 ```
 
-- [`SKILL.md`](skills/mindmap/SKILL.md) hướng dẫn Claude cách phân loại đầu vào, áp dụng các quy tắc cấu trúc hỗn hợp, ghi ra file Markmap đúng định dạng, và xử lý các tình huống biên (file không tồn tại, đầu vào rỗng, trùng tên file, fallback khi render thất bại).
-- [`scripts/render.sh`](skills/mindmap/scripts/render.sh) là một bash helper ~35 dòng với exit code rõ ràng (`0` thành công · `1` sai cách dùng · `2` không tìm thấy file · `3` thiếu npx · `4` render thất bại). Khi thành công, nó chỉ in đường dẫn `.html` ra stdout.
+- [`SKILL.md`](skills/mindmap-vi/SKILL.md) hướng dẫn Claude cách phân loại đầu vào, áp dụng các quy tắc cấu trúc hỗn hợp, ghi ra file Markmap đúng định dạng, và xử lý các tình huống biên (file không tồn tại, đầu vào rỗng, trùng tên file, fallback khi render thất bại).
+- [`scripts/render.sh`](skills/mindmap-vi/scripts/render.sh) là một bash helper ~45 dòng với exit code rõ ràng (`0` thành công · `1` sai cách dùng · `2` không tìm thấy file · `3` thiếu npx · `4` render thất bại). Khi thành công, nó chỉ in đường dẫn `.html` ra stdout, rồi gọi `balance-html.mjs` để nhúng `balanced-layout.js` vào trước lệnh `Markmap.create()` của trang; patch này ghi lại `node.state.rect` trong `_relayout()` để trải nhánh ra cả hai bên node gốc.
 
 Thiết kế đầy đủ: xem [`docs/design-spec.md`](docs/design-spec.md).
 
@@ -193,7 +197,7 @@ Script render có bộ test bằng bash (không cần mạng — dùng `npx` gi�
 bash tests/run_tests.sh
 ```
 
-Kết quả mong đợi: `ALL TESTS PASSED` (47 check, trải trên `test_render.sh`, `test_skill_frontmatter.sh`, `test_skill_body.sh`, `test_skill_vi.sh`).
+Kết quả mong đợi: `ALL TESTS PASSED` (56 check, trải trên `test_render.sh`, `test_skill_frontmatter.sh`, `test_skill_body.sh`, `test_skill_vi.sh`).
 
 ```
 my-mindmap-skills/
