@@ -180,19 +180,35 @@ html {
 
     var lineWidth = this.options.lineWidth;
     var color = this.options.color;
+    var root = this.state.data;
+    if (!root) return;
+
+    // Folded-away nodes and links are still in the DOM, mid-exit-transition,
+    // and that transition is what removes them. Touching them — above all
+    // starting a transition of our own — cancels the removal and leaves orphan
+    // branches and link stubs behind, so restrict every fixup to live data.
+    var live = new Set(collect(root, []));
 
     // cx is set outside markmap's transition, so plain attr() is enough.
-    this.g.selectAll('g.markmap-node').each(function (d) {
-      var mirrored = !!(d.state && d.state.mirrored);
-      var sel = d3.select(this);
-      sel.classed(MIRROR_CLASS, mirrored);
-      sel.selectAll('circle').attr('cx', mirrored ? 0 : d.state.rect.width);
-    });
+    this.g
+      .selectAll('g.markmap-node')
+      .filter(function (d) {
+        return live.has(d);
+      })
+      .each(function (d) {
+        var mirrored = !!(d.state && d.state.mirrored);
+        var sel = d3.select(this);
+        sel.classed(MIRROR_CLASS, mirrored);
+        sel.selectAll('circle').attr('cx', mirrored ? 0 : d.state.rect.width);
+      });
 
     // `d` IS transitioned by markmap towards right-only endpoints; replace that
     // transition wholesale (stroke and width included) so nothing animates to a
     // stale path.
-    this.transition(this.g.selectAll('path.markmap-link'))
+    var links = this.g.selectAll('path.markmap-link').filter(function (l) {
+      return live.has(l.source) && live.has(l.target);
+    });
+    this.transition(links)
       .attr('stroke', function (l) {
         return color(l.target);
       })
