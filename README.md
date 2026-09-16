@@ -4,7 +4,7 @@
 
 **Understand anything at a glance — turn a file, a URL, or a topic into a zoomable mindmap without leaving your AI coding agent.**
 
-[English](README.md) · [中文](README.zh.md)
+[English](README.md) · [Tiếng Việt](README.vi.md)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-22c55e.svg)](LICENSE)
 [![Works with](https://img.shields.io/badge/works%20with-Claude%20Code%20%7C%20GitHub%20Copilot-2563eb)](#-install)
