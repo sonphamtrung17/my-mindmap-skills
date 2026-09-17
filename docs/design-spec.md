@@ -186,7 +186,8 @@ is best-effort and degrades gracefully.
 - **Input:** `$1` = path to the `.md`; optional `$2` = output `.html` path
   (default: swap extension).
 - **Does:** verify `npx` exists → `npx markmap-cli "$md" -o "$html" --no-open` →
-  inline the bilateral-layout patch → print the html path.
+  inline the bilateral-layout patch and set the page title (`node
+  balance-html.mjs "$html" "$md"`) → print the html path.
 - **Depends on:** `npx` only; the layout step additionally wants `node`. No
   other state.
 
@@ -215,6 +216,20 @@ page's `Markmap.create()` call.
   too narrow on the next `_relayout()` and clip its own text.
 - **Best-effort:** a missing anchor or missing `node` only warns on stderr; the
   one-sided `.html` is still a valid deliverable.
+
+### Page title
+
+markmap-cli's HTML template hardcodes `<title>Markmap</title>`, so every
+rendered map is an indistinguishable browser tab. `balance-html.mjs` takes the
+`.md` as its second argument and rewrites the tag:
+
+- **Source:** frontmatter `title:` (anchored at column 0, so the nested
+  `markmap:` keys cannot be mistaken for it), else the first `# ` H1.
+- **Plain text:** links/emphasis/code marks are stripped (a tab bar renders no
+  markdown) and `& < >` are escaped.
+- **Independent of the layout patch:** the title is written even when the
+  markmap-view anchor is missing (exit 6), and a missing/unreadable `.md` only
+  warns — it never fails the render.
 
 ## Testing Plan
 

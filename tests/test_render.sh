@@ -84,7 +84,7 @@ for a in "$@"; do
   prev="$a"
 done
 cat > "$out" <<'HTML'
-<html><body><svg id="mindmap"></svg>
+<html><head><title>Markmap</title></head><body><svg id="mindmap"></svg>
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.18.12/dist/browser/index.js"></script>
 <script>window.mm = markmap.Markmap.create("svg#mindmap", null, {});</script>
@@ -126,5 +126,32 @@ PATH="$mmbin:$PATH" bash "$linkroot/mindmap/scripts/render.sh" \
   "$work/doc.mindmap.md" "$work/symlinked.html" >/dev/null 2>&1
 assert_contains "$(cat "$work/symlinked.html")" "balanced-layout.js" \
   "patches html when invoked through a symlinked skill dir"
+
+# Case 12: markmap-cli hardcodes <title>Markmap</title>, so every open map looks
+# identical in the tab bar. The render must substitute the map's own title.
+titled="$(cat "$work/patched.html")"
+assert_contains "$titled" "<title>Sample</title>" "tab title comes from frontmatter title"
+[ "${titled#*<title>Markmap</title>}" = "$titled" ] && gone=yes || gone=no
+assert_eq "yes" "$gone" "hardcoded Markmap title is replaced"
+
+# Case 13: no frontmatter title -> fall back to the H1, as plain text: a tab bar
+# renders no markdown, and & / < would break the HTML if passed through raw.
+cat > "$work/plain.mindmap.md" <<'MD'
+# **Chiến lược** & `AI`
+
+## Branch
+- point
+MD
+PATH="$mmbin:$PATH" bash "$RENDER" "$work/plain.mindmap.md" >/dev/null 2>&1
+assert_contains "$(cat "$work/plain.mindmap.html")" "<title>Chiến lược &amp; AI</title>" \
+  "falls back to the H1 as escaped plain text"
+
+# Case 14: the title patch is best-effort — an unreadable .md must still leave a
+# layout-patched .html behind, never fail the render.
+PATH="$mmbin:$PATH" bash "$RENDER" "$work/doc.mindmap.md" "$work/orphan.html" >/dev/null 2>&1
+node "$here/../skills/mindmap/scripts/balance-html.mjs" "$work/orphan.html" 2>/dev/null; rc=$?
+assert_eq 0 "$rc" "missing markmap source is not fatal"
+assert_contains "$(cat "$work/orphan.html")" "balanced-layout.js" \
+  "keeps the layout patch when the title source is missing"
 
 finish

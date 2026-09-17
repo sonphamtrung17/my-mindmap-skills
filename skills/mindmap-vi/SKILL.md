@@ -73,6 +73,7 @@ bash <skill-dir>/scripts/render.sh "<output.md>"
 
 - Khi thành công, nó in đường dẫn `.html` ra stdout — hãy báo lại cho người dùng.
 - Nếu trả về mã khác 0 (ví dụ chưa cài `npx`, exit code 3), file `.md` vẫn là kết quả được đảm bảo. Nói với người dùng là đã bỏ qua bước render, và hiển thị câu lệnh chạy tay mà nó in ra (trường hợp thiếu npx với exit code 3 sẽ in một câu lệnh như vậy). **Không** coi đây là thất bại của cả task.
+- Tên tab browser của trang đã render lấy từ `title:` trong frontmatter (không có thì lấy H1), nên luôn ghi `title:` cho đúng nội dung — nếu không thì mọi map mở ra đều hiện `Markmap`.
 
 ## Định dạng Markmap
 Ghi file `.md` theo style sau:

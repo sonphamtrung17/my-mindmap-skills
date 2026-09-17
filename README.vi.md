@@ -156,9 +156,10 @@ markmap:
 /mindmap "Transformer attention" --render
 ```
 
-Bên dưới nó chạy `npx markmap-cli <file>.md -o <file>.html --no-open` (thông qua [`skills/mindmap-vi/scripts/render.sh`](skills/mindmap-vi/scripts/render.sh)), rồi nhúng thêm một **patch layout hai chiều** vào file HTML.
+Bên dưới nó chạy `npx markmap-cli <file>.md -o <file>.html --no-open` (thông qua [`skills/mindmap-vi/scripts/render.sh`](skills/mindmap-vi/scripts/render.sh)), rồi xử lý lại file HTML: nhúng một **patch layout hai chiều** và đặt **tên trang thật**.
 
 - **Layout cân đối trái/phải.** markmap gốc chỉ mọc cây sang phải: node gốc nằm sát lề trái, map càng nhiều nhánh thì càng cao, fit bị giới hạn bởi chiều cao, và nửa viewport bị bỏ trống trong khi chữ co lại tới mức khó đọc. [`balanced-layout.js`](skills/mindmap-vi/scripts/balanced-layout.js) chia các nhánh cấp 1 thành nhóm phải và nhóm trái rồi lật nhóm trái, nên map lấp đầy viewport một cách đối xứng. Đo trên map 75 node: tỉ lệ khung `0.60 → 2.10`, zoom `0.41 → 0.68`, lề `492/491` → `35/35`.
+- **Tên tab browser đúng nội dung.** markmap-cli hardcode `<title>Markmap</title>`, nên mở mười map là mười tab giống hệt nhau. [`balance-html.mjs`](skills/mindmap-vi/scripts/balance-html.mjs) thay nó bằng tên của chính map — `title:` trong frontmatter, hoặc H1 nếu không có — dưới dạng plain text đã escape (`# **Chiến lược** & AI` → `Chiến lược &amp; AI`).
 - **File `.md` luôn là kết quả được đảm bảo.** Việc render chỉ là best-effort.
 - Nếu chưa cài `npx` / Node.js, skill vẫn ghi ra `.md`, báo là đã bỏ qua bước render, và in ra chính xác câu lệnh để bạn chạy tay — không mất gì cả.
 - Nếu không nhúng được patch layout, file `.html` vẫn được ghi với layout một chiều mặc định của markmap và in cảnh báo ra stderr.

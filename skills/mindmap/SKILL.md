@@ -100,6 +100,7 @@ bash <skill-dir>/scripts/render.sh "<output.md>"
 
 - On success it prints the `.html` path on stdout — report it to the user.
 - If it exits non-zero (e.g. `npx` not available, exit code 3), the `.md` is still the guaranteed deliverable. Tell the user rendering was skipped, and show any manual command it printed (the exit-3 npx-missing case prints one). Do **not** treat this as a failure of the whole task.
+- The rendered page's browser-tab title comes from the frontmatter `title:` (H1 as fallback), so always write a real `title:` — otherwise every open map would read `Markmap`.
 
 ## Markmap Format
 Write the `.md` like this:

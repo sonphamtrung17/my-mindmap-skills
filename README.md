@@ -240,9 +240,10 @@ markmap:
 /mindmap "transformer attention" --render
 ```
 
-This runs `npx markmap-cli <file>.md -o <file>.html --no-open` under the hood (via [`skills/mindmap/scripts/render.sh`](skills/mindmap/scripts/render.sh)), then inlines a **bilateral-layout patch** into the HTML.
+This runs `npx markmap-cli <file>.md -o <file>.html --no-open` under the hood (via [`skills/mindmap/scripts/render.sh`](skills/mindmap/scripts/render.sh)), then post-processes the HTML: a **bilateral-layout patch** and a **real page title**.
 
 - **Balanced left/right layout.** Stock markmap grows the tree to the right only: the root sits on the left edge, tall maps end up height-constrained, and half the viewport stays empty at an unreadable scale. [`balanced-layout.js`](skills/mindmap/scripts/balanced-layout.js) splits the root's branches into a right and a left group and mirrors the left one, so the map fills the viewport symmetrically. On a 75-node map: aspect ratio `0.60 → 2.10`, zoom `0.41 → 0.68`, margins `492/491` → `35/35`.
+- **Real browser-tab title.** markmap-cli hardcodes `<title>Markmap</title>`, so ten open maps are ten identical tabs. [`balance-html.mjs`](skills/mindmap/scripts/balance-html.mjs) rewrites it with the map's own title — the frontmatter `title:`, or the H1 when there is none — as escaped plain text (`# **Chiến lược** & AI` → `Chiến lược &amp; AI`).
 - **The `.md` is always the guaranteed deliverable.** Rendering is best-effort.
 - If `npx` / Node.js isn't installed, the skill still writes the `.md`, reports that rendering was skipped, and prints the exact command to run manually — nothing is lost.
 - If the layout patch can't be applied, the `.html` is still written with markmap's stock one-sided layout and a warning goes to stderr.

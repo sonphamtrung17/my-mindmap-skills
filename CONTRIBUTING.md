@@ -13,7 +13,7 @@ skills/mindmap/
 ├── scripts/
 │   ├── render.sh         # thin wrapper around `npx markmap-cli` (the .md → .html step)
 │   ├── balanced-layout.js # browser patch: bilateral (two-sided) markmap layout
-│   ├── balance-html.mjs  # inlines balanced-layout.js into the rendered .html
+│   ├── balance-html.mjs  # inlines balanced-layout.js + sets the .html <title>
 │   └── degrade-rich.mjs  # rewrites rich nodes (tables/code/checkboxes) to bullets for the poster path
 └── references/
     ├── copilot-tools.md  # Claude Code → Copilot CLI tool-name mapping
@@ -21,7 +21,7 @@ skills/mindmap/
 ```
 
 - [`SKILL.md`](skills/mindmap/SKILL.md) tells Claude how to classify the input, apply the hybrid structuring rules, write a well-formed Markmap file, and handle edge cases (missing files, empty input, name collisions, render fallback).
-- [`scripts/render.sh`](skills/mindmap/scripts/render.sh) is a ~45-line bash helper with deterministic exit codes (`0` ok · `1` usage · `2` file not found · `3` npx missing · `4` render failed). On success it prints only the `.html` path to stdout. After a successful render it calls `balance-html.mjs`, which inlines [`balanced-layout.js`](skills/mindmap/scripts/balanced-layout.js) ahead of the page's `Markmap.create()` call; that patch rewrites `node.state.rect` in `_relayout()` to lay branches out on both sides of the root. Both steps are best-effort: a one-sided `.html` is still a valid deliverable.
+- [`scripts/render.sh`](skills/mindmap/scripts/render.sh) is a ~45-line bash helper with deterministic exit codes (`0` ok · `1` usage · `2` file not found · `3` npx missing · `4` render failed). On success it prints only the `.html` path to stdout. After a successful render it calls `balance-html.mjs`, which inlines [`balanced-layout.js`](skills/mindmap/scripts/balanced-layout.js) ahead of the page's `Markmap.create()` call and replaces markmap-cli's hardcoded `<title>Markmap</title>` with the map's own title; the layout patch rewrites `node.state.rect` in `_relayout()` to lay branches out on both sides of the root. Both steps are best-effort: a one-sided `.html` is still a valid deliverable.
 
 See [`docs/design-spec.md`](docs/design-spec.md) for the full design.
 
