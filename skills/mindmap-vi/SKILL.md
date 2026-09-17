@@ -8,7 +8,7 @@ allowed-tools: Bash, Read, Write, Glob, WebFetch
 # Skill sơ đồ tư duy — sinh Markmap tương tác
 
 ## Cách gọi
-`/mindmap-vi <đầu-vào> [--render] [--output <đường-dẫn>]`
+`/mindmap-vi <đầu-vào> [--panel] [--render] [--output <đường-dẫn>]`
 
 `<đầu-vào>` là một trong:
 - **Đường dẫn file** — đọc file đó rồi sinh sơ đồ
@@ -17,6 +17,7 @@ allowed-tools: Bash, Read, Write, Glob, WebFetch
 - Một **chủ đề** ngắn — sinh sơ đồ từ kiến thức của chính model
 
 Tham số:
+- `--panel` — thiết kế cấu trúc bằng hội đồng phản biện nhiều agent (tốn nhiều token; dùng cho nguồn phức tạp/quan trọng như paper). Xem **Bước 2 → Hội đồng phản biện**.
 - `--render` — sau khi ghi `.md`, sinh thêm một file `.html` độc lập, tương tác được
 - `--output <đường-dẫn>` — ghi `.md` vào đường dẫn chỉ định thay vì đường dẫn mặc định
 
@@ -50,6 +51,37 @@ Quy tắc:
 - **Độ sâu:** hướng tới 3–4 tầng.
 - **Dùng cụm từ, không dùng câu:** mỗi node là một nhãn ngắn.
 - **Dễ đọc quan trọng hơn đầy đủ:** với nguồn rất dài, hãy map cấu trúc và các ý chính — không phải từng dòng. Với nguồn không cấu trúc / chủ đề / nguồn lớn, hướng tới **4–7 nhánh chính**; khi nguồn đã có cấu trúc thì theo outline của chính nó. Mạnh tay lược bỏ.
+
+#### Hội đồng phản biện (chỉ khi có `--panel`)
+Khi có `--panel`, đừng tự dựng cấu trúc một mình. Hãy chạy một hội đồng nhiều
+agent qua tool **Workflow**, dùng các prompt trong
+[`references/judge-panel.md`](references/judge-panel.md):
+
+1. **Propose** — 3 agent proposer, mỗi agent thiết kế một cấu trúc hoàn chỉnh
+   theo một lăng kính khác nhau (ưu tiên mạch truyện, ưu tiên dữ liệu, ưu tiên
+   người xem), gán cho mọi node một **format** (list/table/code/checkbox/link/bold)
+   và một **tier** (`core` render được ở mọi nơi; `rich` = table/code/checkbox,
+   chỉ markmap chuẩn).
+2. **Judge** — 3 agent judge cho điểm độc lập tất cả phương án theo rubric (quy
+   tắc skill + trình bày: punchline-first, con số chủ đạo, node lá dễ đọc, cân
+   đối thị giác, format phù hợp, và **node phải bằng tiếng Việt**), rồi nêu ý
+   hay nhất của từng phương án.
+3. **Synthesize** — 1 agent synthesizer lấy phương án điểm cao nhất làm xương
+   sống, ghép thêm các ý mà hội đồng đã đánh dấu, rồi xuất ra file Markmap `.md`
+   cuối cùng.
+
+Dùng đúng khung Workflow và đúng các prompt/schema trong file reference đó. Lưu ý
+chi phí: nó spawn khoảng 7 agent và tốn nhiều token — chỉ dùng cho nguồn phức tạp
+hoặc quan trọng. Nếu cả 3 proposer đều thất bại, quay về cách dựng một lượt ở
+Bước 2 và nói rõ với người dùng.
+
+**An toàn render-tier:** synthesizer giữ nguyên các format `rich` — chúng render
+được trên đường `.md` mặc định (markmap.js.org / extension VS Code / `--render`).
+Đường **poster dọc** (`scripts/parse-md.mjs`) chỉ đọc heading `##` và bullet `-`,
+nên trước khi đưa một file `.md` từ panel xuống đường poster, hãy cho nó qua
+`scripts/degrade-rich.mjs` (`node scripts/degrade-rich.mjs <in.md> <out.md>`) —
+script này viết lại table/code/checkbox thành bullet. Nội dung bị đổi hình, **không
+bao giờ bị âm thầm bỏ mất**.
 
 ### Bước 3: Ghi file Markmap `.md`
 Ghi file theo đúng style ở mục **Định dạng Markmap** bên dưới.

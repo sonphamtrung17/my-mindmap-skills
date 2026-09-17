@@ -53,7 +53,8 @@ my-mindmap-skills/
     │       ├── balanced-layout.js     # browser patch: bilateral markmap layout
     │       ├── balance-html.mjs       # inlines the patch into the rendered .html
     │       └── degrade-rich.mjs       # rich nodes -> bullets, for the poster path
-    └── mindmap-vi/                    # /mindmap-vi (Vietnamese); shares the renderer
+    └── mindmap-vi/                    # /mindmap-vi (Vietnamese); same renderer,
+                                       # same --panel, own translated judge-panel.md
 ```
 
 ### SKILL.md frontmatter

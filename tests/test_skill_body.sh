@@ -18,5 +18,14 @@ assert_contains "$body" "render.sh" "calls render.sh for --render"
 assert_contains "$body" "4–7" "states the 4-7 branch guardrail"
 assert_contains "$body" "WebFetch" "documents WebFetch for URL input"
 assert_contains "$body" "URL" "documents URL as an input type"
+assert_contains "$body" "--panel" "documents --panel flag"
+assert_contains "$body" "references/judge-panel.md" "points --panel at the judge-panel reference"
+
+# --panel is inert without its reference file and the poster-path degrader.
+PANEL="$here/../skills/mindmap/references/judge-panel.md"
+[ -f "$PANEL" ] && panel=yes || panel=no
+assert_eq "yes" "$panel" "judge-panel.md reference exists"
+[ -f "$here/../skills/mindmap/scripts/degrade-rich.mjs" ] && degrade=yes || degrade=no
+assert_eq "yes" "$degrade" "degrade-rich.mjs exists for the poster path"
 
 finish

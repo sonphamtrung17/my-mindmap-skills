@@ -33,7 +33,7 @@ The render helper has a bash test suite (no network — it uses a fake `npx`):
 bash tests/run_tests.sh
 ```
 
-Expected: `ALL TESTS PASSED` (56 checks across `test_render.sh`, `test_skill_frontmatter.sh`, `test_skill_body.sh`, `test_skill_vi.sh`).
+Expected: `ALL TESTS PASSED` (81 checks across `test_degrade_rich.sh`, `test_render.sh`, `test_skill_frontmatter.sh`, `test_skill_body.sh`, `test_skill_vi.sh`).
 
 ```
 my-mindmap-skills/

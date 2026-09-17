@@ -99,7 +99,7 @@ Sau đó chạy `/reload-skills` (hoặc restart Claude Code). Dùng `/help` đ�
 ## Cách dùng
 
 ```
-/mindmap <đầu-vào> [--render] [--output <đường-dẫn>]
+/mindmap <đầu-vào> [--panel] [--render] [--output <đường-dẫn>]
 ```
 
 | Đầu vào | Ví dụ | Hành vi |
@@ -111,8 +111,62 @@ Sau đó chạy `/reload-skills` (hoặc restart Claude Code). Dùng `/help` đ�
 
 **Tham số**
 
+- `--panel` — thiết kế cấu trúc bằng hội đồng phản biện nhiều agent; dùng cho nguồn phức tạp hoặc quan trọng (xem **Hội đồng phản biện** bên dưới).
 - `--render` — sau khi ghi `.md`, sinh thêm một file `.html` độc lập, tương tác được (cần Node.js / `npx`).
 - `--output <đường-dẫn>` — ghi `.md` vào đường dẫn chỉ định thay vì đường dẫn mặc định.
+
+---
+
+## Hội đồng phản biện (`--panel`)
+
+Với nguồn phức tạp hoặc quan trọng — paper, báo cáo dài — thêm `--panel`. Thay vì thiết kế cấu trúc trong một lượt, skill chạy một **hội đồng nhiều agent**: **3 proposer → 3 judge → 1 synthesizer**. Chúng cạnh tranh về cấu trúc và chọn format tốt nhất cho từng node.
+
+```mermaid
+flowchart TB
+    SRC["Nội dung nguồn + quy tắc skill"]
+    subgraph PROPOSE["1 - Đề xuất (3 lăng kính)"]
+        P1["Proposer A<br/>ưu tiên mạch truyện"]
+        P2["Proposer B<br/>ưu tiên dữ liệu"]
+        P3["Proposer C<br/>ưu tiên người xem"]
+    end
+    subgraph JUDGE["2 - Phản biện (cho điểm 11 tiêu chí)"]
+        J1["Judge 1"]
+        J2["Judge 2"]
+        J3["Judge 3"]
+    end
+    subgraph SYNTH["3 - Tổng hợp"]
+        SY["Phương án cao điểm nhất = xương sống<br/>+ ghép ý hay hội đồng đánh dấu"]
+    end
+    SRC --> P1 & P2 & P3
+    P1 & P2 & P3 --> J1 & J2 & J3
+    J1 & J2 & J3 --> SY
+    SY --> OUT["File Markmap .md cuối cùng"]
+```
+
+**1 · Đề xuất** — ba agent, mỗi agent thiết kế một cấu trúc hoàn chỉnh theo một lăng kính khác nhau:
+
+| Lăng kính | Dựng sơ đồ quanh... |
+|---|---|
+| **Ưu tiên mạch truyện** | mạch và trật tự các phần của chính nguồn |
+| **Ưu tiên dữ liệu** | các con số chủ đạo và bằng chứng, mọi chỉ số đều **in đậm** |
+| **Ưu tiên người xem** | punchline lên trước, mọi node lá đọc được trên slide |
+
+Mỗi proposer cũng gán cho từng node một **format** và một **render tier**:
+
+| Format | Tier | Phù hợp nhất cho |
+|---|---|---|
+| bullet list | `core` | các dữ kiện song song |
+| bold inline | `core` | con số chủ đạo, nhấn mạnh |
+| link | `core` | tài liệu tham khảo, repo, arXiv |
+| table | `rich` | so sánh, số liệu benchmark |
+| code block | `rich` | công thức, hàm reward, code |
+| checkbox | `rich` | task, hạn chế, checklist |
+
+**2 · Phản biện** — ba judge cho điểm độc lập từng phương án 1–5 trên **11 tiêu chí** (số nhánh, độ sâu, cách diễn đạt, độ dễ đọc, trung thực với nguồn, punchline-first, con số chủ đạo, node lá dễ đọc, cân đối thị giác, format phù hợp, và **node phải bằng tiếng Việt**), rồi nêu một ý hay nhất của từng phương án.
+
+**3 · Tổng hợp** — một agent lấy phương án cao điểm nhất làm **xương sống**, ghép vào các ý hay nhất mà hội đồng đã đánh dấu từ hai phương án còn lại, rồi xuất ra file Markmap `.md` cuối cùng.
+
+> **Chi phí:** hội đồng spawn khoảng 7 agent và tốn nhiều token — chỉ dùng cho nguồn xứng đáng. Không có `--panel`, skill dựng nhanh trong một lượt. Prompt và schema chính xác nằm ở [`skills/mindmap-vi/references/judge-panel.md`](skills/mindmap-vi/references/judge-panel.md) — bản tiếng Việt, có thêm ràng buộc cứng: mọi node phải viết bằng tiếng Việt.
 
 ---
 
@@ -178,13 +232,15 @@ skills/mindmap-vi/
 ├── scripts/
 │   ├── render.sh          # Wrapper mỏng quanh `npx markmap-cli`
 │   ├── balanced-layout.js # Patch chạy trong browser: layout markmap hai chiều
-│   └── balance-html.mjs   # Nhúng balanced-layout.js vào file .html đã render
+│   ├── balance-html.mjs   # Nhúng balanced-layout.js + đặt <title> cho file .html đã render
+│   └── degrade-rich.mjs   # Node rich (table/code/checkbox) → bullet, cho đường poster
 └── references/
-    └── copilot-tools.md  # Bảng map tên tool Claude Code → GitHub Copilot
+    ├── copilot-tools.md  # Bảng map tên tool Claude Code → GitHub Copilot
+    └── judge-panel.md    # Prompt/schema/workflow của hội đồng `--panel` (tiếng Việt)
 ```
 
 - [`SKILL.md`](skills/mindmap-vi/SKILL.md) hướng dẫn Claude cách phân loại đầu vào, áp dụng các quy tắc cấu trúc hỗn hợp, ghi ra file Markmap đúng định dạng, và xử lý các tình huống biên (file không tồn tại, đầu vào rỗng, trùng tên file, fallback khi render thất bại).
-- [`scripts/render.sh`](skills/mindmap-vi/scripts/render.sh) là một bash helper ~45 dòng với exit code rõ ràng (`0` thành công · `1` sai cách dùng · `2` không tìm thấy file · `3` thiếu npx · `4` render thất bại). Khi thành công, nó chỉ in đường dẫn `.html` ra stdout, rồi gọi `balance-html.mjs` để nhúng `balanced-layout.js` vào trước lệnh `Markmap.create()` của trang; patch này ghi lại `node.state.rect` trong `_relayout()` để trải nhánh ra cả hai bên node gốc.
+- [`scripts/render.sh`](skills/mindmap-vi/scripts/render.sh) là một bash helper ~45 dòng với exit code rõ ràng (`0` thành công · `1` sai cách dùng · `2` không tìm thấy file · `3` thiếu npx · `4` render thất bại). Khi thành công, nó chỉ in đường dẫn `.html` ra stdout, rồi gọi `balance-html.mjs` để nhúng `balanced-layout.js` vào trước lệnh `Markmap.create()` của trang và ghi `<title>` bằng tên của map; patch layout ghi lại `node.state.rect` trong `_relayout()` để trải nhánh ra cả hai bên node gốc.
 
 Thiết kế đầy đủ: xem [`docs/design-spec.md`](docs/design-spec.md).
 
@@ -198,7 +254,7 @@ Script render có bộ test bằng bash (không cần mạng — dùng `npx` gi�
 bash tests/run_tests.sh
 ```
 
-Kết quả mong đợi: `ALL TESTS PASSED` (56 check, trải trên `test_render.sh`, `test_skill_frontmatter.sh`, `test_skill_body.sh`, `test_skill_vi.sh`).
+Kết quả mong đợi: `ALL TESTS PASSED` (81 check, trải trên `test_degrade_rich.sh`, `test_render.sh`, `test_skill_frontmatter.sh`, `test_skill_body.sh`, `test_skill_vi.sh`).
 
 ```
 my-mindmap-skills/
