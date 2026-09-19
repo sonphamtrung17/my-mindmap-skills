@@ -19,6 +19,7 @@ allowed-tools: Bash, Read, Write, Glob, WebFetch
 Flags:
 - `--panel` — design the structure with a multi-agent judge panel (token-intensive; best for complex/important sources like papers). See **Step 2 → Judge Panel**.
 - `--render` — after writing the `.md`, also produce a standalone interactive `.html`
+- `--html-only` — like `--render`, but delete the intermediate `.md` so only the `.html` remains. The `.md` is treated as a temp artifact, not a deliverable. Best-effort: if the render fails or the cleanup can't delete the file, the `.html` is still reported. Pairs with `--output` so you can also control where the `.html` lands.
 - `--output <path>` — write the `.md` to this path instead of the default
 
 > **Cross-harness note:** This skill uses Claude Code tool names (`Read`, `Write`, `Glob`, `Bash`, `WebFetch`). On **GitHub Copilot CLI**, use the equivalents (`view`, `create`, `glob`, `bash`, `web_fetch`) — see [`references/copilot-tools.md`](references/copilot-tools.md). The workflow itself is identical on both.
@@ -91,14 +92,22 @@ Output path:
 
 After writing, tell the user the exact path and how to view it: open it at https://markmap.js.org or with the VS Code “Markmap” extension.
 
-### Step 4 (only with `--render`): Render to HTML
+### Step 4 (only with `--render` or `--html-only`): Render to HTML
 `render.sh` lives in the `scripts/` folder next to this SKILL.md. If you don't already know that absolute path, locate it with Glob (`**/skills/mindmap/scripts/render.sh`), then run it by that path:
 
 ```
+# --render: leave the .md in place, write .html beside it
 bash <skill-dir>/scripts/render.sh "<output.md>"
+
+# --html-only: same as --render, then delete the .md so only .html remains
+bash <skill-dir>/scripts/render.sh --html-only "<output.md>"
+
+# either form accepts an explicit .html path as the last arg
+bash <skill-dir>/scripts/render.sh --html-only "<output.md>" "<other>.html"
 ```
 
 - On success it prints the `.html` path on stdout — report it to the user.
+- If `--html-only` was used and the .md cleanup succeeds, **do not** tell the user the .md path; only the .html is a deliverable. If cleanup fails (e.g. read-only filesystem), still report the .html path and note that the .md could not be removed.
 - If it exits non-zero (e.g. `npx` not available, exit code 3), the `.md` is still the guaranteed deliverable. Tell the user rendering was skipped, and show any manual command it printed (the exit-3 npx-missing case prints one). Do **not** treat this as a failure of the whole task.
 - The rendered page's browser-tab title comes from the frontmatter `title:` (H1 as fallback), so always write a real `title:` — otherwise every open map would read `Markmap`.
 

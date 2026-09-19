@@ -154,4 +154,42 @@ assert_eq 0 "$rc" "missing markmap source is not fatal"
 assert_contains "$(cat "$work/orphan.html")" "balanced-layout.js" \
   "keeps the layout patch when the title source is missing"
 
+# Case 15: --html-only alongside an explicit html path is honored, and the .md
+# is removed. Placed last because it deletes its source file, breaking later
+# cases that reuse doc.mindmap.md.
+cp "$FIXTURE" "$work/only.mindmap.md"
+out3="$(PATH="$fakebin:$PATH" bash "$RENDER" --html-only "$work/only.mindmap.md" "$work/only.html")"
+assert_eq "$work/only.html" "$out3" "--html-only honors explicit html path"
+[ -f "$work/only.html" ] && only_html=yes || only_html=no
+assert_eq "yes" "$only_html" "--html-only still writes html"
+[ -f "$work/only.mindmap.md" ] && md_left=yes || md_left=no
+assert_eq "no" "$md_left" "--html-only removes the source .md"
+
+# Case 16: --html-only with the default-derived html path also removes the .md.
+cp "$FIXTURE" "$work/keep.mindmap.md"
+out4="$(PATH="$fakebin:$PATH" bash "$RENDER" --html-only "$work/keep.mindmap.md")"
+assert_eq "$work/keep.mindmap.html" "$out4" "--html-only derives html path when not given"
+[ -f "$work/keep.mindmap.md" ] && kept=yes || kept=no
+assert_eq "no" "$kept" "--html-only removes the source .md (derived path)"
+
+# Case 17: --html-only followed by a missing source still exits 2 (the cleanup
+# is best-effort and never runs if the render is impossible).
+bash "$RENDER" --html-only "$here/fixtures/does-not-exist.md" >/dev/null 2>&1; rc=$?
+assert_eq 2 "$rc" "--html-only with missing md still exits 2 (md not found)"
+
+# Case 18: the render succeeds even if cleanup fails. Simulate by making the
+# .md's parent directory read-only after the .md exists, then try --html-only.
+# Skip when running as root (root bypasses the read-only bit).
+if [ "$(id -u)" -ne 0 ]; then
+  ro="$(mktemp -d)"; _tmpdirs+=("$ro")
+  cp "$FIXTURE" "$ro/locked.mindmap.md"
+  chmod 555 "$ro"
+  out5="$(PATH="$fakebin:$PATH" bash "$RENDER" --html-only "$ro/locked.mindmap.md" 2>/dev/null)"; rc=$?
+  chmod 755 "$ro"
+  assert_eq 0 "$rc" "--html-only still exits 0 when cleanup fails"
+  assert_eq "$ro/locked.mindmap.html" "$out5" "--html-only still emits the html when cleanup fails"
+else
+  echo "  skip: --html-only cleanup-failure path (running as root bypasses 555)"
+fi
+
 finish

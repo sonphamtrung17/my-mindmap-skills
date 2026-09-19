@@ -1,12 +1,28 @@
 #!/usr/bin/env bash
 # render.sh — render a Markmap .md to standalone interactive HTML.
-# Usage: render.sh <md-path> [html-path]
+# Usage: render.sh [--html-only] <md-path> [html-path]
+#
+# --html-only  : after a successful render, delete the source .md so only the
+#                .html remains. Best-effort: a cleanup failure never fails the
+#                render (the .html is still emitted to stdout).
+#
 # Exit codes: 0 ok | 1 usage | 2 md not found | 3 npx missing | 4 render failed
 set -euo pipefail
 
-md="${1:-}"
+html_only="no"
+md=""
+for arg in "$@"; do
+  case "$arg" in
+    --html-only) html_only="yes" ;;
+    *)
+      if [ -z "$md" ]; then md="$arg"
+      else html="${arg}"; fi
+      ;;
+  esac
+done
+
 if [ -z "$md" ]; then
-  echo "usage: render.sh <md-path> [html-path]" >&2
+  echo "usage: render.sh [--html-only] <md-path> [html-path]" >&2
   exit 1
 fi
 
@@ -15,7 +31,7 @@ if [ ! -f "$md" ]; then
   exit 2
 fi
 
-html="${2:-}"
+html="${html:-}"
 if [ -z "$html" ]; then
   # swap trailing .md for .html (handles foo.mindmap.md -> foo.mindmap.html)
   html="${md%.md}.html"
@@ -46,6 +62,14 @@ if [ -f "$balance" ] && command -v node >/dev/null 2>&1; then
   fi
 else
   echo "warning: balanced layout skipped (needs Node.js and balance-html.mjs)." >&2
+fi
+
+# --html-only: drop the source .md so only the .html remains. Best-effort:
+# a cleanup failure never fails the render.
+if [ "$html_only" = "yes" ]; then
+  if ! rm -f "$md"; then
+    echo "warning: --html-only could not remove '$md'; HTML still rendered." >&2
+  fi
 fi
 
 echo "$html"

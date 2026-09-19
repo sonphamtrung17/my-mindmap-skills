@@ -19,6 +19,7 @@ allowed-tools: Bash, Read, Write, Glob, WebFetch
 Tham số:
 - `--panel` — thiết kế cấu trúc bằng hội đồng phản biện nhiều agent (tốn nhiều token; dùng cho nguồn phức tạp/quan trọng như paper). Xem **Bước 2 → Hội đồng phản biện**.
 - `--render` — sau khi ghi `.md`, sinh thêm một file `.html` độc lập, tương tác được
+- `--html-only` — giống `--render`, nhưng xoá luôn file `.md` trung gian để chỉ còn `.html`. File `.md` lúc này chỉ là file tạm, không phải kết quả giao. Best-effort: nếu render lỗi hoặc không xoá được `.md` thì vẫn báo đường dẫn `.html`. Kết hợp được với `--output` để chỉ định nơi `.html` sẽ rơi vào.
 - `--output <đường-dẫn>` — ghi `.md` vào đường dẫn chỉ định thay vì đường dẫn mặc định
 
 > **Lưu ý đa nền tảng:** Skill này viết theo tên tool của Claude Code (`Read`, `Write`, `Glob`, `Bash`, `WebFetch`). Trên **GitHub Copilot**, dùng tool tương ứng (`view`, `create`, `glob`, `bash`, `web_fetch`) — xem [`references/copilot-tools.md`](references/copilot-tools.md). Workflow giống nhau hoàn toàn trên cả hai nền tảng.
@@ -96,14 +97,22 @@ Ghi file theo đúng style ở mục **Định dạng Markmap** bên dưới.
 
 Sau khi ghi, cho người dùng biết đường dẫn chính xác và cách xem: mở tại https://markmap.js.org, hoặc dùng extension "Markmap" của VS Code.
 
-### Bước 4 (chỉ khi có `--render`): render ra HTML
+### Bước 4 (chỉ khi có `--render` hoặc `--html-only`): render ra HTML
 `render.sh` nằm trong thư mục `scripts/` cùng cấp với SKILL.md này. Nếu chưa biết đường dẫn tuyệt đối của nó, dùng Glob để tìm (`**/skills/mindmap-vi/scripts/render.sh`), rồi chạy theo đường dẫn đó:
 
 ```
+# --render: giữ .md, ghi .html cạnh bên
 bash <skill-dir>/scripts/render.sh "<output.md>"
+
+# --html-only: giống --render, rồi xoá .md để chỉ còn .html
+bash <skill-dir>/scripts/render.sh --html-only "<output.md>"
+
+# cả hai dạng đều nhận đường dẫn .html tường minh ở tham số cuối
+bash <skill-dir>/scripts/render.sh --html-only "<output.md>" "<khác>.html"
 ```
 
 - Khi thành công, nó in đường dẫn `.html` ra stdout — hãy báo lại cho người dùng.
+- Nếu dùng `--html-only` và xoá `.md` thành công, **đừng** báo đường dẫn `.md` cho người dùng; chỉ `.html` là kết quả giao. Nếu bước dọn dẹp lỗi (ví dụ filesystem chỉ đọc), vẫn báo đường dẫn `.html` và ghi chú là không xoá được `.md`.
 - Nếu trả về mã khác 0 (ví dụ chưa cài `npx`, exit code 3), file `.md` vẫn là kết quả được đảm bảo. Nói với người dùng là đã bỏ qua bước render, và hiển thị câu lệnh chạy tay mà nó in ra (trường hợp thiếu npx với exit code 3 sẽ in một câu lệnh như vậy). **Không** coi đây là thất bại của cả task.
 - Tên tab browser của trang đã render lấy từ `title:` trong frontmatter (không có thì lấy H1), nên luôn ghi `title:` cho đúng nội dung — nếu không thì mọi map mở ra đều hiện `Markmap`.
 
